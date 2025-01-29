@@ -22,6 +22,8 @@ INSTALLED_APPS = [
 
     "rest_framework",
     "drf_yasg",
+
+    "users",
 ]
 
 MIDDLEWARE = [
@@ -94,4 +96,9 @@ STATICFILES_DIRS = [BASE_DIR / "static/"]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+AUTH_USER_MODEL = "users.CustomUser"
+
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+SMSAERO_EMAIL = os.getenv("SMSAERO_EMAIL")
+SMSAERO_API_KEY = os.getenv("SMSAERO_API_KEY")
