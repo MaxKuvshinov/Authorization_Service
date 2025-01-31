@@ -9,19 +9,19 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            "--email", type=str, required=True, help="Email для суперпользователя"
+            "--phone", type=str, required=True, help="Номер телефона суперпользователя"
         )
         parser.add_argument(
             "--password", type=str, required=True, help="Пароль для суперпользователя"
         )
 
     def handle(self, *args, **options):
-        email = options["email"]
+        phone_number = options["phone"]
         password = options["password"]
 
-        # Проверка email
-        if not email or "@" not in email:
-            self.stdout.write(self.style.ERROR("Некорректный email."))
+        # Проверка номера телефона
+        if not phone_number.startswith("+") or not phone_number[1:].isdigit() or len(phone_number) < 10:
+            self.stdout.write(self.style.ERROR("Некорректный формат номера телефона."))
             return
 
         # Проверка длины пароля
@@ -30,13 +30,13 @@ class Command(BaseCommand):
             return
 
         try:
-            if CustomUser.objects.filter(email=email).exists():
+            if CustomUser.objects.filter(phone_number=phone_number).exists():
                 self.stdout.write(
-                    self.style.WARNING(f"Пользователь с email {email} уже существует.")
+                    self.style.WARNING(f"Пользователь с номером {phone_number} уже существует.")
                 )
                 return
 
-            user = CustomUser(email=email)
+            user = CustomUser(phone_number=phone_number)
             user.set_password(password)
             user.is_active = True
             user.is_staff = True
@@ -44,7 +44,7 @@ class Command(BaseCommand):
             user.save()
 
             self.stdout.write(
-                self.style.SUCCESS(f"Суперпользователь с email:{email} успешно создан!")
+                self.style.SUCCESS(f"Суперпользователь с email:{phone_number} успешно создан!")
             )
         except ValidationError as e:
             self.stderr.write(
