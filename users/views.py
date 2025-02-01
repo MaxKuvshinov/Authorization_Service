@@ -1,5 +1,5 @@
 from django.contrib.auth import login, logout
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
@@ -27,14 +27,15 @@ class RequestCodeView(APIView):
     def post(self, request):
         serializer = PhoneNumberSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response({'serializer': serializer})
+            return Response({'serializer': serializer}, status=status.HTTP_400_BAD_REQUEST)
 
         phone_number = serializer.validated_data['phone_number']
-        code = SMSService.generate_code()
-
-        SMSService.save_code(phone_number, code)  # Сохраняю код в Редис
-
-        SMSService.send_sms(phone_number, code)  # Отправляю смс с кодом
+        try:
+            code = SMSService.generate_code()
+            SMSService.save_code(phone_number, code)  # Сохраняю код в Redis
+            SMSService.send_sms(phone_number, code)  # Отправляю SMS с кодом
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return redirect('users:verify-code')
 
@@ -51,7 +52,7 @@ class VerifyCodeView(APIView):
     def post(self, request):
         serializer = VerifyCodeSerializer(data=request.data)
         if not serializer.is_valid():
-            return Response({'serializer': serializer})
+            return Response({'serializer': serializer}, status=status.HTTP_400_BAD_REQUEST)
 
         phone_number = serializer.validated_data['phone_number']
         code = serializer.validated_data['code']
@@ -60,15 +61,12 @@ class VerifyCodeView(APIView):
             user, tokens = AuthService.authenticate(phone_number, code)
             if user is not None:
                 login(request, user)
-            response = redirect('users:profile')
-            response.set_cookie('access', tokens['access'])
-            response.set_cookie('refresh', tokens['refresh'])
-            return response
+            return redirect("users:profile")
         except ValueError as e:
             return Response({
                 'serializer': serializer,
                 'error': str(e)
-            })
+            }, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ProfileView(generics.RetrieveUpdateAPIView):
@@ -78,26 +76,24 @@ class ProfileView(generics.RetrieveUpdateAPIView):
     template_name = 'users/profile.html'
     serializer_class = ProfileCustomUserSerializer
 
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        return Response({
-            'user': self.object,
-            'serializer': self.get_serializer(self.object)
-        })
+    def get_object(self):
+        return self.request.user
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        return Response({'user': serializer.data})
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        serializer = self.get_serializer(self.object, data=request.data)
+        serializer = self.get_serializer(self.object, data=request.data, patrial=True)
         if not serializer.is_valid():
             return Response({
                 'user': self.object,
-                'serializer': serializer
-            })
+                'errors': serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
         serializer.save()
         return redirect('users:profile')
-
-    def get_object(self):
-        return self.request.user
 
 
 class ActivateReferralCodeView(APIView):
@@ -116,7 +112,7 @@ class ActivateReferralCodeView(APIView):
             context={'user': request.user}
         )
         if not serializer.is_valid():
-            return Response({'serializer': serializer})
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             ReferralService.activate_referral_code(
@@ -125,10 +121,7 @@ class ActivateReferralCodeView(APIView):
             )
             return redirect('users:profile')
         except Exception as e:
-            return Response({
-                'serializer': serializer,
-                'error': str(e)
-            })
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class LogoutProfileView(APIView):
@@ -137,7 +130,6 @@ class LogoutProfileView(APIView):
 
     def get(self, request):
         logout(request)
+        request.session.flush()
         response = redirect("users:verify-code")
-        response.delete_cookie("access")
-        response.delete_cookie("refresh")
         return response
