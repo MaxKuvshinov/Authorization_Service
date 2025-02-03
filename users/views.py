@@ -1,19 +1,20 @@
 from django.contrib.auth import login, logout
-from rest_framework import generics, status
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.views import APIView
-from rest_framework.renderers import TemplateHTMLRenderer
 from django.shortcuts import redirect
+from rest_framework import generics, status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.renderers import TemplateHTMLRenderer
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from users.models import CustomUser
 
 from .serializers import (
     PhoneNumberSerializer,
-    VerifyCodeSerializer,
     ProfileCustomUserSerializer,
     ReferralCodeSerializer,
+    VerifyCodeSerializer,
 )
-from .services import SMSService, AuthService, ReferralService
+from .services import AuthService, ReferralService, SMSService
 
 
 class RequestCodeView(APIView):
@@ -48,6 +49,8 @@ class RequestCodeView(APIView):
 
 
 class VerifyCodeView(APIView):
+    """Представление для верификации кода"""
+
     renderer_classes = [TemplateHTMLRenderer]
     template_name = "users/verify_code.html"
 

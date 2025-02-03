@@ -1,12 +1,13 @@
 from rest_framework import serializers
+
 from .models import CustomUser
 from .validators import (
-    phone_regex,
     code_regex,
     invite_code_regex,
+    phone_regex,
     validate_phone_number,
-    validate_verification_code,
     validate_referral_code,
+    validate_verification_code,
 )
 
 

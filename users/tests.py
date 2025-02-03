@@ -1,9 +1,11 @@
-from rest_framework.test import APITestCase
-from django.urls import reverse
 from unittest.mock import patch
+
+from django.urls import reverse
 from rest_framework import status
-from users.services import SMSService
+from rest_framework.test import APITestCase
+
 from users.models import CustomUser
+from users.services import SMSService
 
 
 class RequestCodeViewTest(APITestCase):

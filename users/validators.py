@@ -1,7 +1,7 @@
 from django.core.validators import RegexValidator
 from rest_framework import serializers
-from .models import CustomUser
 
+from .models import CustomUser
 
 phone_regex = RegexValidator(
     regex=r"^\+?1?\d{9,15}$",

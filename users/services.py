@@ -1,11 +1,14 @@
-from smsaero import SmsAero
-from config.settings import SMSAERO_API_KEY, SMSAERO_EMAIL
 import random
+import time
 from typing import Tuple
+
 from django.conf import settings
 from django.core.cache import cache
+from smsaero import SmsAero
+
+from config.settings import SMSAERO_API_KEY, SMSAERO_EMAIL
+
 from .models import CustomUser
-import time
 
 
 class SMSService:
