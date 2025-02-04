@@ -1,5 +1,5 @@
 from django.contrib.auth import login, logout
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import TemplateHTMLRenderer
